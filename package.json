@@ -1,0 +1,22 @@
+{
+  "name": "website-monitor",
+  "version": "1.0.0",
+  "description": "Node app to monitor website data",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "website-scraper"
+  },
+  "author": "Tom Wood",
+  "license": "ISC",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.12",
+    "mongodb": "^4.10.0",
+    "puppeteer": "^19.0.0",
+    "request": "^2.88.2",
+    "request-promise": "^4.2.6"
+  }
+}

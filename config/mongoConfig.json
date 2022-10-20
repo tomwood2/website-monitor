@@ -1,0 +1,5 @@
+{
+    "uri": "mongodb+srv://twood69:77Sisters@cluster0.igsmtuj.mongodb.net/?retryWrites=true&w=majority",
+    "databaseName": "website-scraper",
+    "collectionName": "sites"
+}
