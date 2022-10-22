@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "/subscriptions/06c5b7d2-0774-4303-bf1c-85ae8a4143d4/appservices/subscriptions/06c5b7d2-0774-4303-bf1c-85ae8a4143d4/resourceGroups/website-monitor_group/providers/Microsoft.Web/sites/website-monitor",
+    "appService.deploySubpath": "."
+}

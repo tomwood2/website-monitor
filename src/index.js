@@ -11,4 +11,6 @@ const info = {
     // mongoConfigFilename: 'mongoConfig.json',
 };
 
+console.log(`Startup: current time is ${new Date().toLocaleString()}`)
+
 runner.main(info);

@@ -4,6 +4,7 @@
   "description": "Node app to monitor website data",
   "main": "index.js",
   "scripts": {
+    "start": "node ./src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "zip-build": "node ./scripts/build.js -b",
     "zip-clean": "node ./scripts/build.js -c",
