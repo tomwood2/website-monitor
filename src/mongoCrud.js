@@ -1,4 +1,5 @@
 const { MongoClient } = require('mongodb');
+const process = require('process');
 
 // calls to connect should be enclosed in try/catch
 
@@ -8,8 +9,9 @@ const getMongoCrud = () => {
     // add database here?
 
     return {
-        connect: async (mongoConfig) => {
-            const local = new MongoClient(mongoConfig.uri);
+        connect: async () => {
+            const mongoConnectUri = process.env.MONGO_CONNECT_URI;
+            const local = new MongoClient(mongoConnectUri);
             await local.connect();
             client = local;
         },

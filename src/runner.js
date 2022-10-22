@@ -1,8 +1,5 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
-const fs = require('fs');
-const path = require('path');
-const process = require('process');
 
 const timeout = (milliseconds) => {
     return new Promise((resolve) => {
@@ -97,10 +94,10 @@ const getRunner = (_mongoCrud) => {
         console.log(`getAll() completed at ${new Date().toLocaleString()}`);
     };
 
-    const run = async (mongoConfig) => {
+    const run = async () => {
         try {
             // connect to mongodb
-            await mongoCrud.connect(mongoConfig);
+            await mongoCrud.connect();
 
             // get sites data from database
             const sites = await mongoCrud.crud('findMany', {});
@@ -117,15 +114,9 @@ const getRunner = (_mongoCrud) => {
 
     return {
         main: async (info) => {
-
-            // load mongo config file
-            const mongoConfigPath = path.join(process.cwd(), info.mongoConfigFolder, info.mongoConfigFilename);
-            const mongoConfigData = await fs.promises.readFile(mongoConfigPath, 'utf-8');
-            const mongoConfig = JSON.parse(mongoConfigData);
-
             while (info.continueLoop) {
-                await run(mongoConfig);
-                // run again in 10 minutes
+                await run();
+                // run again in n minutes
                 await timeout(info.loopFrequency);
             }
         }
