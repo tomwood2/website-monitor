@@ -2,6 +2,13 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const fs = require('fs');
 const path = require('path');
+const process = require('process');
+
+const timeout = (milliseconds) => {
+    return new Promise((resolve) => {
+        setTimeout(() => resolve(), milliseconds);
+    });
+};
 
 const getRunner = (_mongoCrud) => {
     // private properties
@@ -29,7 +36,7 @@ const getRunner = (_mongoCrud) => {
         catch (e) {
             throw `re-throw exception '${e}' in getSiteElementInnerText`;
         }
-    }
+    };
 
     // for copperknob, the selector finds an
     // anchor element that have an href=link to stepsheet
@@ -77,49 +84,53 @@ const getRunner = (_mongoCrud) => {
                             }
                         }
                     };
-                    const result = await mongoCrud.crud("updateOne", {_id: site._id}, update);
+                    await mongoCrud.crud('updateOne', {_id: site._id}, update);
                 }
 
             } catch(e) {
                 // we log but don't stop for single site failure
                 console.log(`exception '${e}' in scrapeAndTest for site id '${site._id}'`);
             }
-        };
+        }
 
         // add exception counts here
         console.log(`getAll() completed at ${new Date().toLocaleString()}`);
-    }
+    };
+
+    const run = async (mongoConfig) => {
+        try {
+            // connect to mongodb
+            await mongoCrud.connect(mongoConfig);
+
+            // get sites data from database
+            const sites = await mongoCrud.crud('findMany', {});
+
+            // scrape each site and test for changes
+            await scrapeAndTest(sites);
+
+        } catch(e)  {
+            console.log(e);
+        } finally {
+            await mongoCrud.close();
+        }
+    };
 
     return {
-        run: async (runner) => {
-            try {
+        main: async (info) => {
 
-                // load config file
-                const mongoConfigPath = path.join(process.cwd(), 'config', 'mongoConfig.json');
-                const mongoConfigData = await fs.promises.readFile(mongoConfigPath, 'utf-8');
-                const mongoConfig = JSON.parse(mongoConfigData);
+            // load mongo config file
+            const mongoConfigPath = path.join(process.cwd(), info.mongoConfigFolder, info.mongoConfigFilename);
+            const mongoConfigData = await fs.promises.readFile(mongoConfigPath, 'utf-8');
+            const mongoConfig = JSON.parse(mongoConfigData);
 
-                // connect to mongodb
-                await mongoCrud.connect(mongoConfig);
-
-                // get sites data from database
-                const sites = await mongoCrud.crud('findMany', {});
-
-                // scrape each site and test for changes
-                await scrapeAndTest(sites);
-
-            } catch(e)  {
-                console.log(e);
-            } finally {
-
-                await mongoCrud.close();
-
+            while (info.continueLoop) {
+                await run(mongoConfig);
                 // run again in 10 minutes
-                setTimeout(runner.run, 60 * 1000 * 10);
+                await timeout(info.loopFrequency);
             }
         }
-    }   // end return object
-}   // end runModule()
+    };   // end return object
+};   // end runModule()
 
 exports.getRunner = getRunner;
 // const mongoCrud = mongoCrudModule.getMongoCrud();

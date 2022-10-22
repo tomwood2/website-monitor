@@ -33,16 +33,16 @@ const getMongoCrud = () => {
             // Make the appropriate DB calls
 
             switch (funtionName) {
-                case "insertOne":
+                case 'insertOne':
                     return await collection.insertOne(argument1);
 
-                case "insertMany":
+                case 'insertMany':
                     return await collection.insertMany(argument1);
 
-                case "findOne":
-                    return await collection.findOne(argument1);;
+                case 'findOne':
+                    return await collection.findOne(argument1);
 
-                case "findMany": {
+                case 'findMany': {
                     const cursor = collection.find(argument1);
                         // .sort({ last_review: -1 })
                         // .limit(argument2);
@@ -50,11 +50,11 @@ const getMongoCrud = () => {
                     return await cursor.toArray();
                 }
 
-                case "updateOne":
+                case 'updateOne':
                     return await collection.updateOne(argument1, argument2);
-            };
+            }
         }
-    } // return object
-}   // mongoCrud()
+    }; // return object
+};   // mongoCrud()
 
 exports.getMongoCrud = getMongoCrud;
