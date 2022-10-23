@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch Program (index.js)",
+            "name": "Launch index.js)",
             "program": "${workspaceFolder}\\src\\index.js",
             "request": "launch",
             "skipFiles": [
@@ -13,6 +13,17 @@
             ],
             "type": "node",
             "envFile": "${workspaceFolder}/.env",
+        },
+        {
+            "name": "Launch addSites.js",
+            "program": "${workspaceFolder}\\src\\addSites.js",
+            "request": "launch",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "node",
+            "envFile": "${workspaceFolder}/.env",
         }
+    
     ]
 }
