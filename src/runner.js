@@ -1,5 +1,9 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
+const mongoose = require('mongoose');
+const process = require('process');
+const sitesModel = require('website-monitor-schemas/sites');
+const usersModel = require('website-monitor-schemas/users');
 
 const timeout = (milliseconds) => {
     return new Promise((resolve) => {
@@ -7,9 +11,7 @@ const timeout = (milliseconds) => {
     });
 };
 
-const getRunner = (_mongoCrud) => {
-    // private properties
-    const mongoCrud = _mongoCrud;
+const getRunner = () => {
 
     // private functions
     const getSiteElementInnerText = async ({url, selector, maxLength}) => {
@@ -35,15 +37,15 @@ const getRunner = (_mongoCrud) => {
         }
     };
 
-    // for copperknob, the selector finds an
-    // anchor element that have an href=link to stepsheet
-    // and child span element with dance name
-
     const scrapeAndTest = async (sites) => {
 
         for(const site of sites) {
 
             try {
+
+                // for copperknob, the selector finds an
+                // anchor element that have an href=link to stepsheet
+                // and child span element with dance name
 
                 const elementText = await getSiteElementInnerText(site);
 
@@ -54,34 +56,40 @@ const getRunner = (_mongoCrud) => {
                 // test for change
                 if (neverUpdated || elementText !== site.last.elementText) {
 
-                    // send notification if neverUpdated is false
+                    // send notification and update last property on site document
+
                     const message = `Changed detected for site:\n${site.url}`;
                     const title = site.name;
 
                     console.log(`element changed to:\n'${elementText}' for site:\n${site.url}`);
 
-                    // axios will throw on non-2xx status codes, no response
-                    // and bad request creation, see
-                    // https://axios-http.com/docs/handling_errors
-
-                    await axios.post('https://api.pushover.net/1/messages.json', {
-                        token: 'apm1gzynn6tu8f3x2fv8wx6b9oz6wk',
-                        user: 'uqp7try2irsehj2iua97pxnx4kg5ee',
-                        device: 'Tommys_iPhone_12_Pro_Max',
-                        title: title,
-                        message: message
-                    });
-            
-                    // update db
-                    const update = {
-                        $set: {
-                            last: {
-                                elementText: elementText,
-                                dateUpdated: new Date()
-                            }
-                        }
+                    site.last = {
+                        elementText: elementText,
+                        dateUpdated: new Date()
                     };
-                    await mongoCrud.crud('updateOne', {_id: site._id}, update);
+
+                    await site.save();
+
+                    for (const user of site.users) {
+                        if (user.pushover !== undefined) {
+
+                            // axios will throw on non-2xx status codes, no response
+                            // and bad request creation, see
+                            // https://axios-http.com/docs/handling_errors
+
+                            await axios.post('https://api.pushover.net/1/messages.json', {
+                                token: 'apm1gzynn6tu8f3x2fv8wx6b9oz6wk',
+                                user: user.pushover.user,
+                                device: user.pushover.device,
+                                title: title,
+                                message: message
+                            });
+                        }
+
+                        if (user.emailNotify) {
+
+                        }
+                    }
                 }
 
             } catch(e) {
@@ -96,11 +104,22 @@ const getRunner = (_mongoCrud) => {
 
     const run = async () => {
         try {
-            // connect to mongodb
-            await mongoCrud.connect();
 
-            // get sites data from database
-            const sites = await mongoCrud.crud('findMany', {});
+            // connect to the mongoDB database
+            mongoose.set('strictQuery', true);
+            await mongoose.connect(process.env.MONGO_CONNECT_URI, {
+                retryWrites: true,
+                w: 'majority',
+                useNewUrlParser: true,
+                useUnifiedTopology: true
+            });
+            
+            // Bind connection to error event (to get notification of connection errors)
+            mongoose.connection.on('error', console.error.bind(console, 'MongoDB connection error:'));
+        
+            const sites = await sitesModel.find({})
+              .populate('users')
+              .exec();
 
             // scrape each site and test for changes
             await scrapeAndTest(sites);
@@ -108,7 +127,8 @@ const getRunner = (_mongoCrud) => {
         } catch(e)  {
             console.log(e);
         } finally {
-            await mongoCrud.close();
+            mongoose.connection.removeAllListeners();
+            await mongoose.connection.close();
         }
     };
 
@@ -124,41 +144,3 @@ const getRunner = (_mongoCrud) => {
 };   // end runModule()
 
 exports.getRunner = getRunner;
-// const mongoCrud = mongoCrudModule.getMongoCrud();
-// const run = getRun(mongoCrud);
-
-// run.run();
-//run(mongoCrud);
-
-// const sitesData = [
-//     {
-//         _id: 1000,
-//         name: 'Fred Whitehouse',
-//         url: 'https://www.copperknob.co.uk/choreographer/468/fred-whitehouse',
-//         selector: '.listitem > .listTitle > a:first',
-//         maxLength: 100,
-//     },
-//     {
-//         _id: 1010,
-//         name: 'Shane McKeever',
-//         url: 'https://www.copperknob.co.uk/choreographer/826/shane-mckeever',
-//         selector: '.listitem > .listTitle > a:first',
-//         maxLength: 100,
-//     },
-//     {
-//         _id: 1020,
-//         name: 'Niels Poulsen',
-//         url: 'https://www.copperknob.co.uk/choreographer/2/niels-poulsen',
-//         selector: '.listitem > .listTitle > a:first',
-//         maxLength: 100,
-//     },
-//     {
-//         _id: 2000,
-//         name: 'NWS San Diego Regional Weather Roundup',
-//         url: 'https://forecast.weather.gov/product.php?site=NWS&issuedby=SGX&product=RWR&format=CI&version=1',
-//         selector: '.glossaryProduct',
-//         maxLength: 200,
-//     },
-// ];
-
-// mongoCrud.crud("insertMany", sitesData);

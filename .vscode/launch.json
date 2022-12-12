@@ -13,17 +13,6 @@
             ],
             "type": "node",
             "envFile": "${workspaceFolder}/.env",
-        },
-        {
-            "name": "Launch addSites.js",
-            "program": "${workspaceFolder}\\src\\addSites.js",
-            "request": "launch",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "type": "node",
-            "envFile": "${workspaceFolder}/.env",
         }
-    
     ]
 }

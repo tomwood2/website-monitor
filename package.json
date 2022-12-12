@@ -9,7 +9,7 @@
     "zip-build": "node ./scripts/build.js -b",
     "zip-clean": "node ./scripts/build.js -c",
     "build": "webpack --mode=development",
-    "lint" : "npx eslint src/**"
+    "lint": "npx eslint src/**"
   },
   "repository": {
     "type": "git",
@@ -20,7 +20,8 @@
   "dependencies": {
     "axios": "^1.1.3",
     "cheerio": "^1.0.0-rc.12",
-    "mongodb": "^4.10.0"
+    "mongodb": "^4.10.0",
+    "website-monitor-schemas": "github:tomwood2/website-monitor-schemas"
   },
   "devDependencies": {
     "adm-zip": "^0.5.9",
