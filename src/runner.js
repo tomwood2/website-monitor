@@ -3,7 +3,8 @@ const cheerio = require('cheerio');
 const mongoose = require('mongoose');
 const process = require('process');
 const sitesModel = require('website-monitor-schemas/sites');
-const usersModel = require('website-monitor-schemas/users');
+const usersModel = require('website-monitor-schemas/users')
+const nodemailer = require('nodemailer');
 
 const timeout = (milliseconds) => {
     return new Promise((resolve) => {
@@ -12,6 +13,14 @@ const timeout = (milliseconds) => {
 };
 
 const getRunner = () => {
+
+    const transporter = nodemailer.createTransport({
+        service: 'Gmail',
+          auth: {
+              user: process.env.EMAIL_NOTIFICATION_SENDER_ADDRESS,
+              pass: process.env.EMAIL_NOTIFICATION_SENDER_PASSWORD,
+          },
+    });
 
     // private functions
     const getSiteElementInnerText = async ({url, selector, maxLength}) => {
@@ -88,6 +97,18 @@ const getRunner = () => {
 
                         if (user.emailNotify) {
 
+                            const emailMessage = {
+                                from: process.env.EMAIL_NOTIFICATION_SENDER_ADDRESS,
+                                to: user.email,
+                                subject: `${site.name} change notification from ${process.env.EMAIL_NOTIFICATION_SENDER_DOMAIN_NAME}`,
+                                text: message,
+                            };
+                            
+                            transporter.sendMail(emailMessage, (err) => {
+                                if (err) {
+                                  console.log(err);
+                                }
+                            });
                         }
                     }
                 }
@@ -116,7 +137,7 @@ const getRunner = () => {
             
             // Bind connection to error event (to get notification of connection errors)
             mongoose.connection.on('error', console.error.bind(console, 'MongoDB connection error:'));
-        
+
             const sites = await sitesModel.find({})
               .populate('users')
               .exec();
