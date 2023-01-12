@@ -3,7 +3,7 @@ const cheerio = require('cheerio');
 const mongoose = require('mongoose');
 const process = require('process');
 const sitesModel = require('website-monitor-schemas/sites');
-const usersModel = require('website-monitor-schemas/users')
+const usersModel = require('website-monitor-schemas/users');
 const nodemailer = require('nodemailer');
 
 const timeout = (milliseconds) => {
@@ -23,7 +23,7 @@ const getRunner = () => {
     });
 
     // private functions
-    const getSiteElementInnerText = async ({url, selector, maxLength}) => {
+    const getSiteElement = async ({url, selector}) => {
         try {
 
             // 'User-agent' defaults to 'axios/1.1.3'
@@ -39,7 +39,10 @@ const getRunner = () => {
                 throw `selector ${selector} not found on url ${url}`;
             }
 
-            return $(elements[0]).prop('innerText').slice(0, maxLength);
+            return {
+                $: $,
+                element: elements[0],
+            };
         }
         catch (e) {
             throw `re-throw exception '${e}' in getSiteElementInnerText`;
@@ -56,10 +59,10 @@ const getRunner = () => {
                 // anchor element that have an href=link to stepsheet
                 // and child span element with dance name
 
-                const elementText = await getSiteElementInnerText(site);
+                const {$, element} = await getSiteElement(site);
+                const elementText = $(element).prop('innerText').slice(0, site.maxLength);
 
                 // if last property doesn't exist in site, it has never been updated
-
                 const neverUpdated = site.last === undefined;
 
                 // test for change
@@ -67,7 +70,8 @@ const getRunner = () => {
 
                     // send notification and update last property on site document
 
-                    const message = `Changed detected for site:\n${site.url}`;
+                    const href = $(element).attr('href');
+                    const message = `${site.name} has a new stepsheet titled ${elementText}.\n${href}`;
                     const title = site.name;
 
                     console.log(`element changed to:\n'${elementText}' for site:\n${site.url}`);
@@ -100,7 +104,7 @@ const getRunner = () => {
                             const emailMessage = {
                                 from: process.env.EMAIL_NOTIFICATION_SENDER_ADDRESS,
                                 to: user.email,
-                                subject: `${site.name} change notification from ${process.env.EMAIL_NOTIFICATION_SENDER_DOMAIN_NAME}`,
+                                subject: `${site.name} new stepsheet notification from ${process.env.EMAIL_NOTIFICATION_SENDER_DOMAIN_NAME}`,
                                 text: message,
                             };
                             
